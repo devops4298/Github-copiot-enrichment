@@ -13,12 +13,14 @@ export interface CodeChunk {
     type: 'function' | 'class' | 'method' | 'snippet';
     name?: string;
     embedding?: number[];
+    keywords?: string[]; // For fast keyword-based search
 }
 
 export interface IndexedRepo {
     chunks: CodeChunk[];
-    lastIndexed: Date;
+    lastIndexed: Date | string;
     workspaceRoot: string;
+    hasEmbeddings: boolean;
 }
 
 export class RepoIndexer {
@@ -26,6 +28,7 @@ export class RepoIndexer {
     private embeddingProvider: EmbeddingProvider;
     private indexPath: string;
     private isIndexing: boolean = false;
+    private maxFiles: number = 2000; // Like GitHub Copilot
 
     constructor(private context: vscode.ExtensionContext) {
         this.embeddingProvider = getEmbeddingProvider();
@@ -40,7 +43,8 @@ export class RepoIndexer {
         }
     }
 
-    async indexRepository(workspaceFolder: vscode.WorkspaceFolder, progressCallback?: (progress: number) => void): Promise<void> {
+    // FAST INDEXING - Like Cursor/Copilot (keyword-based, instant)
+    async indexRepositoryFast(workspaceFolder: vscode.WorkspaceFolder, progressCallback?: (progress: number) => void): Promise<void> {
         if (this.isIndexing) {
             vscode.window.showWarningMessage('Repository indexing already in progress');
             return;
@@ -52,38 +56,109 @@ export class RepoIndexer {
             const chunks: CodeChunk[] = [];
             const files = await this.getAllCodeFiles(workspaceFolder.uri.fsPath);
             
-            for (let i = 0; i < files.length; i++) {
-                const file = files[i];
+            // Limit files like Copilot does
+            const filesToIndex = files.slice(0, this.maxFiles);
+            
+            if (files.length > this.maxFiles) {
+                vscode.window.showWarningMessage(
+                    `Found ${files.length} files. Indexing first ${this.maxFiles} files for performance.`
+                );
+            }
+
+            // Parse files quickly (keyword-based only, no embeddings)
+            for (let i = 0; i < filesToIndex.length; i++) {
+                const file = filesToIndex[i];
                 try {
                     const fileChunks = await this.parseFile(file, workspaceFolder.uri.fsPath);
                     chunks.push(...fileChunks);
                     
                     if (progressCallback) {
-                        progressCallback((i + 1) / files.length * 100);
+                        progressCallback(((i + 1) / filesToIndex.length) * 100);
                     }
                 } catch (error) {
                     console.error(`Error parsing file ${file}:`, error);
                 }
             }
 
-            // Generate embeddings for all chunks
-            vscode.window.showInformationMessage(`Generating embeddings for ${chunks.length} code chunks...`);
-            await this.generateEmbeddings(chunks);
-
             this.indexedRepo = {
                 chunks,
                 lastIndexed: new Date(),
-                workspaceRoot: workspaceFolder.uri.fsPath
+                workspaceRoot: workspaceFolder.uri.fsPath,
+                hasEmbeddings: false
             };
 
             await this.saveIndex();
-            vscode.window.showInformationMessage(`Repository indexed: ${chunks.length} chunks indexed`);
+            vscode.window.showInformationMessage(
+                `✅ Repository indexed: ${chunks.length} chunks from ${filesToIndex.length} files (keyword-based)`
+            );
+
+            // Optionally generate embeddings in background
+            this.generateEmbeddingsInBackground(chunks);
+
         } catch (error) {
             vscode.window.showErrorMessage(`Error indexing repository: ${error}`);
             throw error;
         } finally {
             this.isIndexing = false;
         }
+    }
+
+    // Background embedding generation (optional, non-blocking)
+    private async generateEmbeddingsInBackground(chunks: CodeChunk[]): Promise<void> {
+        // Ask user if they want semantic search
+        const choice = await vscode.window.showInformationMessage(
+            `Generate semantic embeddings for better search? (${chunks.length} chunks, ~${Math.ceil(chunks.length / 20)} seconds)`,
+            'Yes', 'No', 'Later'
+        );
+
+        if (choice !== 'Yes') {
+            return;
+        }
+
+        // Show progress in background
+        vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Generating semantic embeddings...',
+                cancellable: true
+            },
+            async (progress, token) => {
+                const batchSize = 20;
+                const totalBatches = Math.ceil(chunks.length / batchSize);
+                
+                for (let i = 0; i < chunks.length; i += batchSize) {
+                    if (token.isCancellationRequested) {
+                        vscode.window.showInformationMessage('Embedding generation cancelled');
+                        return;
+                    }
+
+                    const batch = chunks.slice(i, Math.min(i + batchSize, chunks.length));
+                    const texts = batch.map(chunk => `${chunk.name || 'code'}: ${chunk.content.substring(0, 300)}`);
+                    
+                    try {
+                        const embeddings = await this.embeddingProvider.generateEmbeddings(texts);
+                        batch.forEach((chunk, idx) => {
+                            chunk.embedding = embeddings[idx];
+                        });
+                        
+                        const currentBatch = Math.floor(i / batchSize) + 1;
+                        progress.report({ 
+                            increment: (100 / totalBatches),
+                            message: `${currentBatch}/${totalBatches} batches`
+                        });
+                    } catch (error) {
+                        console.error(`Error generating embeddings for batch ${i}:`, error);
+                    }
+                }
+
+                if (this.indexedRepo) {
+                    this.indexedRepo.hasEmbeddings = true;
+                    await this.saveIndex();
+                }
+
+                vscode.window.showInformationMessage('✅ Semantic embeddings generated!');
+            }
+        );
     }
 
     private async getAllCodeFiles(rootPath: string): Promise<string[]> {
@@ -99,12 +174,17 @@ export class RepoIndexer {
                     continue;
                 }
 
-                const stat = fs.statSync(fullPath);
+                try {
+                    const stat = fs.statSync(fullPath);
 
-                if (stat.isDirectory()) {
-                    walk(fullPath);
-                } else if (stat.isFile() && isCodeFile(fullPath)) {
-                    files.push(fullPath);
+                    if (stat.isDirectory()) {
+                        walk(fullPath);
+                    } else if (stat.isFile() && isCodeFile(fullPath)) {
+                        files.push(fullPath);
+                    }
+                } catch (error) {
+                    // Skip files we can't access
+                    continue;
                 }
             }
         };
@@ -119,6 +199,15 @@ export class RepoIndexer {
         const chunks: CodeChunk[] = [];
         const relativePath = path.relative(workspaceRoot, filePath);
 
+        // Extract keywords for fast search
+        const extractKeywords = (text: string): string[] => {
+            return text.toLowerCase()
+                .replace(/[^\w\s]/g, ' ')
+                .split(/\s+/)
+                .filter(w => w.length > 2)
+                .slice(0, 50); // Limit keywords per chunk
+        };
+
         // Simple parsing: split by functions/classes
         let currentChunk: string[] = [];
         let startLine = 0;
@@ -129,20 +218,22 @@ export class RepoIndexer {
             const line = lines[i];
             
             // Detect function/class declarations
-            const functionMatch = line.match(/(?:function|def|fn|func|fun|method)\s+(\w+)/);
-            const classMatch = line.match(/(?:class|interface|struct)\s+(\w+)/);
+            const functionMatch = line.match(/(?:function|def|fn|func|fun|method|async\s+function)\s+(\w+)/);
+            const classMatch = line.match(/(?:class|interface|struct|type)\s+(\w+)/);
 
             if (functionMatch || classMatch) {
                 // Save previous chunk if exists
                 if (currentChunk.length > 0) {
+                    const chunkContent = currentChunk.join('\n');
                     chunks.push({
                         id: `${relativePath}:${startLine}`,
                         filePath: relativePath,
-                        content: currentChunk.join('\n'),
+                        content: chunkContent,
                         startLine,
                         endLine: i - 1,
                         type: chunkType,
-                        name: chunkName
+                        name: chunkName,
+                        keywords: extractKeywords(chunkContent)
                     });
                 }
 
@@ -156,14 +247,16 @@ export class RepoIndexer {
 
                 // Create chunks of reasonable size (max 50 lines)
                 if (currentChunk.length >= 50) {
+                    const chunkContent = currentChunk.join('\n');
                     chunks.push({
                         id: `${relativePath}:${startLine}`,
                         filePath: relativePath,
-                        content: currentChunk.join('\n'),
+                        content: chunkContent,
                         startLine,
                         endLine: i,
                         type: chunkType,
-                        name: chunkName
+                        name: chunkName,
+                        keywords: extractKeywords(chunkContent)
                     });
 
                     currentChunk = [];
@@ -176,46 +269,78 @@ export class RepoIndexer {
 
         // Add final chunk
         if (currentChunk.length > 0) {
+            const chunkContent = currentChunk.join('\n');
             chunks.push({
                 id: `${relativePath}:${startLine}`,
                 filePath: relativePath,
-                content: currentChunk.join('\n'),
+                content: chunkContent,
                 startLine,
                 endLine: lines.length - 1,
                 type: chunkType,
-                name: chunkName
+                name: chunkName,
+                keywords: extractKeywords(chunkContent)
             });
         }
 
         return chunks;
     }
 
-    private async generateEmbeddings(chunks: CodeChunk[]): Promise<void> {
-        const batchSize = 10;
-        
-        for (let i = 0; i < chunks.length; i += batchSize) {
-            const batch = chunks.slice(i, Math.min(i + batchSize, chunks.length));
-            const texts = batch.map(chunk => `${chunk.name || 'code'}: ${chunk.content.substring(0, 500)}`);
-            
-            try {
-                const embeddings = await this.embeddingProvider.generateEmbeddings(texts);
-                batch.forEach((chunk, idx) => {
-                    chunk.embedding = embeddings[idx];
-                });
-            } catch (error) {
-                console.error(`Error generating embeddings for batch ${i}:`, error);
-            }
-        }
-    }
-
+    // FAST QUERY using keywords (like Cursor's @codebase)
     async queryRelevantCode(query: string, topK: number = 5): Promise<CodeChunk[]> {
         if (!this.indexedRepo || this.indexedRepo.chunks.length === 0) {
             return [];
         }
 
+        // Check if this is a file creation query
+        const isFileCreation = /create|add|new|make/i.test(query) && /file|feature/i.test(query);
+        
+        if (isFileCreation) {
+            // For file creation, look for similar patterns or folder structures
+            const folderMatch = query.match(/(?:in|to|under)\s+(\w+(?:\/\w+)*)/i);
+            const folder = folderMatch ? folderMatch[1] : 'test';
+            
+            // Find chunks in similar folders
+            const relevantChunks = this.indexedRepo.chunks
+                .filter(chunk => chunk.filePath.toLowerCase().includes(folder.toLowerCase()))
+                .slice(0, topK);
+            
+            if (relevantChunks.length > 0) {
+                return relevantChunks;
+            }
+        }
+
+        // Use embeddings if available, otherwise use keyword search
+        if (this.indexedRepo.hasEmbeddings) {
+            return await this.queryWithEmbeddings(query, topK);
+        } else {
+            return await this.queryWithKeywords(query, topK);
+        }
+    }
+
+    // Fast keyword-based search (instant, no embeddings needed)
+    private async queryWithKeywords(query: string, topK: number): Promise<CodeChunk[]> {
+        const queryKeywords = query.toLowerCase()
+            .replace(/[^\w\s]/g, ' ')
+            .split(/\s+/)
+            .filter(w => w.length > 2);
+
+        const scored = this.indexedRepo!.chunks
+            .map(chunk => {
+                const score = this.calculateKeywordScore(queryKeywords, chunk.keywords || []);
+                return { chunk, score };
+            })
+            .filter(s => s.score > 0)
+            .sort((a, b) => b.score - a.score)
+            .slice(0, topK);
+
+        return scored.map(s => s.chunk);
+    }
+
+    // Semantic search with embeddings (slower but better quality)
+    private async queryWithEmbeddings(query: string, topK: number): Promise<CodeChunk[]> {
         const queryEmbedding = await this.embeddingProvider.generateEmbedding(query);
 
-        const scored = this.indexedRepo.chunks
+        const scored = this.indexedRepo!.chunks
             .filter(chunk => chunk.embedding)
             .map(chunk => ({
                 chunk,
@@ -225,6 +350,21 @@ export class RepoIndexer {
             .slice(0, topK);
 
         return scored.map(s => s.chunk);
+    }
+
+    // Simple keyword scoring (BM25-like)
+    private calculateKeywordScore(queryKeywords: string[], chunkKeywords: string[]): number {
+        let score = 0;
+        const chunkKeywordSet = new Set(chunkKeywords);
+        
+        for (const keyword of queryKeywords) {
+            if (chunkKeywordSet.has(keyword)) {
+                // TF-IDF-like scoring
+                score += 1;
+            }
+        }
+        
+        return score;
     }
 
     private async saveIndex(): Promise<void> {
@@ -243,7 +383,14 @@ export class RepoIndexer {
         try {
             if (fs.existsSync(this.indexPath)) {
                 const data = fs.readFileSync(this.indexPath, 'utf-8');
-                this.indexedRepo = JSON.parse(data);
+                const parsed = JSON.parse(data);
+                
+                // Convert lastIndexed string back to Date object
+                if (parsed.lastIndexed) {
+                    parsed.lastIndexed = new Date(parsed.lastIndexed);
+                }
+                
+                this.indexedRepo = parsed;
                 return true;
             }
         } catch (error) {
@@ -252,11 +399,12 @@ export class RepoIndexer {
         return false;
     }
 
-    getIndexStatus(): { isIndexed: boolean; chunkCount: number; lastIndexed?: Date } {
+    getIndexStatus(): { isIndexed: boolean; chunkCount: number; lastIndexed?: Date; hasEmbeddings?: boolean } {
         return {
             isIndexed: this.indexedRepo !== null,
             chunkCount: this.indexedRepo?.chunks.length || 0,
-            lastIndexed: this.indexedRepo?.lastIndexed
+            lastIndexed: this.indexedRepo?.lastIndexed ? new Date(this.indexedRepo.lastIndexed) : undefined,
+            hasEmbeddings: this.indexedRepo?.hasEmbeddings || false
         };
     }
 
@@ -272,15 +420,82 @@ export class RepoIndexer {
                 chunk => chunk.filePath !== relativePath
             );
 
-            // Add new chunks
+            // Add new chunks (keyword-based, instant)
             const newChunks = await this.parseFile(filePath, workspaceRoot);
-            await this.generateEmbeddings(newChunks);
             this.indexedRepo.chunks.push(...newChunks);
 
             await this.saveIndex();
+
+            // Generate embeddings for new chunks if index has embeddings
+            if (this.indexedRepo.hasEmbeddings && newChunks.length > 0) {
+                const texts = newChunks.map(chunk => `${chunk.name || 'code'}: ${chunk.content.substring(0, 300)}`);
+                const embeddings = await this.embeddingProvider.generateEmbeddings(texts);
+                newChunks.forEach((chunk, idx) => {
+                    chunk.embedding = embeddings[idx];
+                });
+                await this.saveIndex();
+            }
         } catch (error) {
             console.error(`Error updating file ${filePath}:`, error);
         }
     }
-}
 
+    // Trigger semantic indexing manually
+    async generateSemanticIndex(): Promise<void> {
+        if (!this.indexedRepo) {
+            vscode.window.showWarningMessage('Please index repository first');
+            return;
+        }
+
+        if (this.indexedRepo.hasEmbeddings) {
+            vscode.window.showInformationMessage('Semantic embeddings already generated');
+            return;
+        }
+
+        const chunks = this.indexedRepo.chunks;
+        
+        await vscode.window.withProgress(
+            {
+                location: vscode.ProgressLocation.Notification,
+                title: 'Generating semantic embeddings...',
+                cancellable: true
+            },
+            async (progress, token) => {
+                const batchSize = 20;
+                const totalBatches = Math.ceil(chunks.length / batchSize);
+                
+                for (let i = 0; i < chunks.length; i += batchSize) {
+                    if (token.isCancellationRequested) {
+                        vscode.window.showInformationMessage('Embedding generation cancelled');
+                        return;
+                    }
+
+                    const batch = chunks.slice(i, Math.min(i + batchSize, chunks.length));
+                    const texts = batch.map(chunk => `${chunk.name || 'code'}: ${chunk.content.substring(0, 300)}`);
+                    
+                    try {
+                        const embeddings = await this.embeddingProvider.generateEmbeddings(texts);
+                        batch.forEach((chunk, idx) => {
+                            chunk.embedding = embeddings[idx];
+                        });
+                        
+                        const currentBatch = Math.floor(i / batchSize) + 1;
+                        progress.report({ 
+                            increment: (100 / totalBatches),
+                            message: `${currentBatch}/${totalBatches} batches`
+                        });
+                    } catch (error) {
+                        console.error(`Error generating embeddings:`, error);
+                    }
+                }
+
+                if (this.indexedRepo) {
+                    this.indexedRepo.hasEmbeddings = true;
+                    await this.saveIndex();
+                }
+
+                vscode.window.showInformationMessage('✅ Semantic embeddings complete!');
+            }
+        );
+    }
+}

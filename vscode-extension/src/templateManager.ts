@@ -54,11 +54,44 @@ export class TemplateManager {
         }
     }
 
+    // IMPROVED: Smarter template selection with keyword rules + semantic fallback
     async selectBestTemplate(userPrompt: string): Promise<PromptTemplate | null> {
         if (this.templates.length === 0) {
             return null;
         }
 
+        const promptLower = userPrompt.toLowerCase();
+
+        // Rule 1: Keyword-based selection (fast and accurate)
+        const keywordRules: { keywords: string[]; templateId: string; category: string }[] = [
+            { keywords: ['explain', 'how', 'what is', 'describe'], templateId: 'persona_pattern', category: 'explanation' },
+            { keywords: ['step by step', 'steps', 'procedure', 'how to'], templateId: 'chain_of_thought', category: 'procedural' },
+            { keywords: ['example', 'show me', 'demonstrate'], templateId: 'few_shot_examples', category: 'examples' },
+            { keywords: ['create', 'build', 'implement', 'develop'], templateId: 'recipe_pattern', category: 'creation' },
+            { keywords: ['compare', 'difference', 'versus', 'vs'], templateId: 'comparative_analysis', category: 'comparison' },
+            { keywords: ['alternatives', 'options', 'approaches', 'ways'], templateId: 'alternative_approaches', category: 'exploration' },
+            { keywords: ['refactor', 'improve', 'optimize', 'better'], templateId: 'reflection_pattern', category: 'improvement' },
+            { keywords: ['design', 'architecture', 'structure'], templateId: 'persona_pattern', category: 'design' },
+            { keywords: ['debug', 'error', 'fix', 'issue', 'problem'], templateId: 'cognitive_verifier', category: 'debugging' },
+            { keywords: ['test', 'verify', 'validate', 'check'], templateId: 'cognitive_verifier', category: 'testing' },
+            { keywords: ['visualize', 'diagram', 'draw', 'show flow'], templateId: 'visualization_generator', category: 'visual' },
+            { keywords: ['review', 'analyze', 'evaluate'], templateId: 'fact_check_list', category: 'analysis' },
+        ];
+
+        // Check keyword rules first
+        for (const rule of keywordRules) {
+            for (const keyword of rule.keywords) {
+                if (promptLower.includes(keyword)) {
+                    const template = this.templates.find(t => t.id === rule.templateId);
+                    if (template) {
+                        console.log(`Template selected by keyword "${keyword}":`, template.name);
+                        return template;
+                    }
+                }
+            }
+        }
+
+        // Rule 2: Semantic similarity fallback
         const promptEmbedding = await this.embeddingProvider.generateEmbedding(userPrompt);
 
         let bestTemplate: PromptTemplate | null = null;
@@ -75,6 +108,10 @@ export class TemplateManager {
                 bestScore = score;
                 bestTemplate = template;
             }
+        }
+
+        if (bestTemplate) {
+            console.log(`Template selected by semantic similarity (score: ${bestScore.toFixed(3)}):`, bestTemplate.name);
         }
 
         return bestTemplate;
@@ -95,18 +132,15 @@ export class TemplateManager {
     formatPromptWithTemplate(userPrompt: string, template: PromptTemplate, context?: Record<string, string>): string {
         let formattedPrompt = '';
 
-        // Build formatted prompt based on template structure
         for (const [key, value] of Object.entries(template.structure)) {
             let line = value;
 
-            // Replace placeholders with context or user prompt
             if (context) {
                 for (const [contextKey, contextValue] of Object.entries(context)) {
                     line = line.replace(`{${contextKey}}`, contextValue);
                 }
             }
 
-            // Replace {task} with user prompt by default
             line = line.replace('{task}', userPrompt);
             line = line.replace('{question}', userPrompt);
             line = line.replace('{problem}', userPrompt);
@@ -117,7 +151,6 @@ export class TemplateManager {
         return formattedPrompt.trim();
     }
 
-    // Manual template selection
     async showTemplateQuickPick(): Promise<PromptTemplate | undefined> {
         const items = this.templates.map(template => ({
             label: template.name,
@@ -135,7 +168,6 @@ export class TemplateManager {
         return selected?.template;
     }
 
-    // Get template suggestions based on keywords
     suggestTemplates(keywords: string[]): PromptTemplate[] {
         const suggestions: Set<PromptTemplate> = new Set();
 
@@ -153,7 +185,6 @@ export class TemplateManager {
         return Array.from(suggestions);
     }
 
-    // Extract keywords from user prompt
     private extractKeywords(prompt: string): string[] {
         const keywords = [
             'explain', 'compare', 'analyze', 'design', 'implement', 'optimize',
@@ -165,7 +196,6 @@ export class TemplateManager {
         return keywords.filter(k => promptLower.includes(k));
     }
 
-    // Smart template selection with fallback
     async getRecommendedTemplate(userPrompt: string): Promise<{
         template: PromptTemplate | null;
         confidence: number;
@@ -182,5 +212,31 @@ export class TemplateManager {
             alternatives: suggestions.slice(0, 3)
         };
     }
-}
 
+    getTemplateSelectionReason(prompt: string, template: PromptTemplate | null): string {
+        if (!template) {
+            return 'No specific template - using direct format';
+        }
+
+        const promptLower = prompt.toLowerCase();
+        
+        const keywordMap: Record<string, string[]> = {
+            'explanation': ['explain', 'what is', 'describe'],
+            'procedural': ['step by step', 'how to', 'steps'],
+            'examples': ['example', 'show me', 'demonstrate'],
+            'creation': ['create', 'build', 'implement'],
+            'comparison': ['compare', 'versus', 'difference'],
+            'debugging': ['debug', 'error', 'fix', 'issue']
+        };
+
+        for (const [reason, keywords] of Object.entries(keywordMap)) {
+            for (const keyword of keywords) {
+                if (promptLower.includes(keyword)) {
+                    return `${template.name} (keyword: "${keyword}")`;
+                }
+            }
+        }
+
+        return `${template.name} (semantic match)`;
+    }
+}

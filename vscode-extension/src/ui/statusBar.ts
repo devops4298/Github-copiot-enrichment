@@ -61,31 +61,43 @@ export class StatusBarManager {
             this.indexStatusBar.backgroundColor = undefined;
             
             if (status.lastIndexed) {
-                const timeAgo = this.getTimeAgo(status.lastIndexed);
-                this.indexStatusBar.tooltip = `Last indexed: ${timeAgo}\nClick to reindex`;
+                try {
+                    const date = status.lastIndexed instanceof Date 
+                        ? status.lastIndexed 
+                        : new Date(status.lastIndexed);
+                    const timeAgo = this.getTimeAgo(date);
+                    this.indexStatusBar.tooltip = `Last indexed: ${timeAgo}\nClick to reindex`;
+                } catch (error) {
+                    this.indexStatusBar.tooltip = 'Click to reindex';
+                }
             }
         }
     }
 
     private getTimeAgo(date: Date): string {
-        const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
-        
-        if (seconds < 60) {
-            return 'just now';
+        try {
+            const now = new Date();
+            const seconds = Math.floor((now.getTime() - date.getTime()) / 1000);
+            
+            if (seconds < 60) {
+                return 'just now';
+            }
+            
+            const minutes = Math.floor(seconds / 60);
+            if (minutes < 60) {
+                return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
+            }
+            
+            const hours = Math.floor(minutes / 60);
+            if (hours < 24) {
+                return `${hours} hour${hours > 1 ? 's' : ''} ago`;
+            }
+            
+            const days = Math.floor(hours / 24);
+            return `${days} day${days > 1 ? 's' : ''} ago`;
+        } catch (error) {
+            return 'recently';
         }
-        
-        const minutes = Math.floor(seconds / 60);
-        if (minutes < 60) {
-            return `${minutes} minute${minutes > 1 ? 's' : ''} ago`;
-        }
-        
-        const hours = Math.floor(minutes / 60);
-        if (hours < 24) {
-            return `${hours} hour${hours > 1 ? 's' : ''} ago`;
-        }
-        
-        const days = Math.floor(hours / 24);
-        return `${days} day${days > 1 ? 's' : ''} ago`;
     }
 
     show(): void {
@@ -106,4 +118,3 @@ export class StatusBarManager {
         this.indexStatusBar.dispose();
     }
 }
-

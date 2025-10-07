@@ -62,6 +62,7 @@ export function getChatPanelHtml(messages: Array<{
 
         .message.assistant {
             align-self: flex-start;
+            max-width: 95%;
         }
 
         .message-header {
@@ -113,6 +114,143 @@ export function getChatPanelHtml(messages: Array<{
             margin-top: 4px;
         }
 
+        /* Agent Preview Styles - Minimal */
+        .agent-preview {
+            background: var(--vscode-editor-background);
+            border: 1px solid var(--vscode-editorWidget-border);
+            border-radius: 6px;
+            padding: 0;
+            margin: 12px 0;
+        }
+
+        /* Buttons at top with action info */
+        .preview-buttons-top {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 12px;
+            background: var(--vscode-editorWidget-background);
+            border-bottom: 1px solid var(--vscode-editorWidget-border);
+            border-radius: 6px 6px 0 0;
+        }
+
+        .action-info {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .file-icon {
+            font-size: 16px;
+        }
+
+        .action-text {
+            font-size: 13px;
+            font-weight: 500;
+            color: var(--vscode-foreground);
+        }
+
+        .file-stats {
+            font-size: 11px;
+            color: var(--vscode-descriptionForeground);
+            margin-left: auto;
+            margin-right: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 6px;
+        }
+
+        /* Compact buttons */
+        .preview-buttons-top button {
+            padding: 6px 12px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            transition: all 0.15s;
+        }
+
+        .apply-btn {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .apply-btn:hover {
+            background: var(--vscode-button-hoverBackground);
+        }
+
+        .reject-btn {
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+        }
+
+        .reject-btn:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
+        /* Clean code preview */
+        .preview-content {
+            padding: 0;
+        }
+
+        .preview-content pre {
+            background: var(--vscode-editor-background);
+            color: var(--vscode-editor-foreground);
+            padding: 16px;
+            margin: 0;
+            border-radius: 0 0 6px 6px;
+            overflow-x: auto;
+            max-height: 500px;
+            overflow-y: auto;
+            font-family: var(--vscode-editor-font-family, 'Menlo', 'Monaco', 'Courier New', monospace);
+            font-size: var(--vscode-editor-font-size, 13px);
+            line-height: var(--vscode-editor-line-height, 1.6);
+            tab-size: 4;
+            white-space: pre;
+            word-wrap: normal;
+        }
+
+        .preview-content code {
+            font-family: var(--vscode-editor-font-family, 'Menlo', 'Monaco', 'Courier New', monospace);
+            font-size: var(--vscode-editor-font-size, 13px);
+        }
+
+        .preview-buttons button {
+            flex: 1;
+            padding: 10px;
+            font-size: 13px;
+            font-weight: bold;
+            cursor: pointer;
+            border: none;
+            border-radius: 4px;
+            transition: all 0.2s;
+        }
+
+        .apply-btn {
+            background: var(--vscode-button-background);
+            color: var(--vscode-button-foreground);
+        }
+
+        .apply-btn:hover {
+            background: var(--vscode-button-hoverBackground);
+            transform: translateY(-1px);
+        }
+
+        .reject-btn {
+            background: var(--vscode-input-background);
+            color: var(--vscode-input-foreground);
+            border: 1px solid var(--vscode-input-border);
+        }
+
+        .reject-btn:hover {
+            background: var(--vscode-list-hoverBackground);
+        }
+
         .input-container {
             border-top: 1px solid var(--vscode-panel-border);
             padding: 16px;
@@ -127,8 +265,8 @@ export function getChatPanelHtml(messages: Array<{
 
         textarea {
             flex: 1;
-            min-height: 40px;
-            max-height: 200px;
+            min-height: 80px;
+            max-height: 300px;
             padding: 10px;
             background-color: var(--vscode-input-background);
             color: var(--vscode-input-foreground);
@@ -179,17 +317,6 @@ export function getChatPanelHtml(messages: Array<{
 
         button.secondary:hover:not(:disabled) {
             background-color: var(--vscode-button-secondaryHoverBackground);
-        }
-
-        .enrichment-badge {
-            display: inline-block;
-            padding: 2px 8px;
-            background-color: var(--vscode-badge-background);
-            color: var(--vscode-badge-foreground);
-            border-radius: 10px;
-            font-size: 10px;
-            font-weight: 500;
-            margin-left: 8px;
         }
 
         .loading-indicator {
@@ -248,40 +375,6 @@ export function getChatPanelHtml(messages: Array<{
             font-size: 48px;
             margin-bottom: 16px;
         }
-
-        .empty-state-title {
-            font-size: 16px;
-            font-weight: 600;
-            margin-bottom: 8px;
-            color: var(--vscode-foreground);
-        }
-
-        .empty-state-description {
-            font-size: 13px;
-            line-height: 1.6;
-            max-width: 400px;
-        }
-
-        code {
-            background-color: var(--vscode-textCodeBlock-background);
-            padding: 2px 6px;
-            border-radius: 3px;
-            font-family: var(--vscode-editor-font-family);
-            font-size: 12px;
-        }
-
-        pre {
-            background-color: var(--vscode-textCodeBlock-background);
-            padding: 12px;
-            border-radius: 4px;
-            overflow-x: auto;
-            margin: 8px 0;
-        }
-
-        pre code {
-            background: none;
-            padding: 0;
-        }
     </style>
 </head>
 <body>
@@ -289,23 +382,27 @@ export function getChatPanelHtml(messages: Array<{
         ${messages.length === 0 ? `
             <div class="empty-state">
                 <div class="empty-state-icon">💡</div>
-                <div class="empty-state-title">Start a conversation</div>
-                <div class="empty-state-description">
-                    Type your prompt below and it will be enriched with repository context 
-                    and structured using research-based prompt engineering templates.
+                <div style="font-size: 16px; font-weight: 600; margin-bottom: 8px;">Start a conversation</div>
+                <div style="max-width: 400px; line-height: 1.6;">
+                    Type your prompt below. Click "Enrich" to enhance it with repo context and templates, then "Send" to get AI response.
                 </div>
             </div>
-        ` : messages.map(msg => `
+        ` : messages.map(msg => {
+            // Check if content contains agent preview HTML
+            const isAgentPreview = msg.content.includes('agent-preview');
+            
+            return `
             <div class="message ${msg.role}">
                 <div class="message-header">
                     <div class="message-avatar">${msg.role === 'user' ? '👤' : '🤖'}</div>
                     <span>${msg.role === 'user' ? 'You' : 'Assistant'}</span>
-                    ${msg.role === 'assistant' ? '<span class="enrichment-badge">Enriched</span>' : ''}
                 </div>
-                <div class="message-content">${escapeHtml(msg.content)}</div>
+                <div class="message-content"${isAgentPreview ? ' style="background: transparent; border: none; padding: 0;"' : ''}>
+                    ${isAgentPreview ? msg.content : escapeHtml(msg.content)}
+                </div>
                 <div class="message-timestamp">${formatTimestamp(msg.timestamp)}</div>
             </div>
-        `).join('')}
+        `}).join('')}
         <div id="loadingIndicator" class="loading-indicator" style="display: none;">
             <div class="loading-dots">
                 <span></span>
@@ -327,7 +424,7 @@ export function getChatPanelHtml(messages: Array<{
                 <button id="enrichButton" onclick="enrichPrompt()">
                     ✨ Enrich
                 </button>
-                <button id="sendButton" class="secondary" onclick="sendMessage()">
+                <button id="sendButton" onclick="sendMessage()">
                     📤 Send
                 </button>
             </div>
@@ -345,10 +442,10 @@ export function getChatPanelHtml(messages: Array<{
         // Auto-resize textarea
         promptInput.addEventListener('input', function() {
             this.style.height = 'auto';
-            this.style.height = Math.min(this.scrollHeight, 200) + 'px';
+            this.style.height = Math.min(this.scrollHeight, 300) + 'px';
         });
 
-        // Handle Enter key (Shift+Enter for new line, Enter to send)
+        // Handle Enter key
         promptInput.addEventListener('keydown', function(e) {
             if (e.key === 'Enter' && !e.shiftKey) {
                 e.preventDefault();
@@ -363,6 +460,8 @@ export function getChatPanelHtml(messages: Array<{
             }
 
             setLoading(true);
+            enrichButton.textContent = '⏳ Enriching...';
+            
             vscode.postMessage({
                 command: 'enrichPrompt',
                 prompt: prompt
@@ -385,6 +484,19 @@ export function getChatPanelHtml(messages: Array<{
             promptInput.style.height = 'auto';
         }
 
+        // NEW: Apply and Reject functions for agent actions
+        function applyAction() {
+            vscode.postMessage({
+                command: 'applyAgentAction'
+            });
+        }
+
+        function rejectAction() {
+            vscode.postMessage({
+                command: 'rejectAgentAction'
+            });
+        }
+
         function setLoading(isLoading) {
             loadingIndicator.style.display = isLoading ? 'flex' : 'none';
             sendButton.disabled = isLoading;
@@ -405,12 +517,24 @@ export function getChatPanelHtml(messages: Array<{
             const message = event.data;
             
             switch (message.command) {
+                case 'enrichedPrompt':
+                    promptInput.value = message.enrichedPrompt;
+                    promptInput.style.height = 'auto';
+                    promptInput.style.height = Math.min(promptInput.scrollHeight, 300) + 'px';
+                    setLoading(false);
+                    enrichButton.textContent = '✨ Enrich';
+                    break;
                 case 'messageComplete':
                     setLoading(false);
+                    enrichButton.textContent = '✨ Enrich';
                     break;
                 case 'error':
                     setLoading(false);
+                    enrichButton.textContent = '✨ Enrich';
                     alert('Error: ' + message.error);
+                    break;
+                case 'scrollToBottom':
+                    scrollToBottom();
                     break;
             }
         });
@@ -444,7 +568,6 @@ export function getChatPanelHtml(messages: Array<{
             return date.toLocaleDateString();
         }
 
-        // Initial scroll to bottom
         scrollToBottom();
     </script>
 </body>
@@ -464,4 +587,3 @@ function escapeHtml(text: string): string {
 function formatTimestamp(timestamp: Date): string {
     return timestamp.toLocaleTimeString();
 }
-

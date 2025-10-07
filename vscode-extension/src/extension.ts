@@ -23,7 +23,7 @@ export function activate(context: vscode.ExtensionContext) {
 
     // Webview panels
     let chatPanel: vscode.WebviewPanel | undefined;
-    let sidebarProvider: SidebarProvider;
+    let sidebarProvider: SidebarProvider | undefined;
 
     // Initialize
     initialize();
@@ -116,18 +116,33 @@ export function activate(context: vscode.ExtensionContext) {
         await vscode.window.withProgress(
             {
                 location: vscode.ProgressLocation.Notification,
-                title: 'Indexing repository...',
+                title: 'Indexing repository (fast keyword-based)...',
                 cancellable: false
             },
             async (progress) => {
-                await repoIndexer.indexRepository(workspaceFolder, (percent) => {
+                // Use FAST indexing (keyword-based, like Cursor)
+                await repoIndexer.indexRepositoryFast(workspaceFolder, (percent) => {
                     progress.report({ increment: percent });
                 });
                 updateStatusBar();
-                sidebarProvider.refresh();
+                if (sidebarProvider) {
+                    sidebarProvider.refresh();
+                }
             }
         );
     }
+
+    // Command: Generate Semantic Index
+    const generateSemanticIndexCommand = vscode.commands.registerCommand(
+        'promptEnrichment.generateSemanticIndex',
+        async () => {
+            await repoIndexer.generateSemanticIndex();
+            updateStatusBar();
+            if (sidebarProvider) {
+                sidebarProvider.refresh();
+            }
+        }
+    );
 
     // Command: Show Templates
     const showTemplatesCommand = vscode.commands.registerCommand(
@@ -190,7 +205,9 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
             await copilotIntegration.switchMode('chat');
             updateStatusBar();
-            sidebarProvider.refresh();
+            if (sidebarProvider) {
+                sidebarProvider.refresh();
+            }
         }
     );
 
@@ -200,7 +217,9 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
             await copilotIntegration.switchMode('agent');
             updateStatusBar();
-            sidebarProvider.refresh();
+            if (sidebarProvider) {
+                sidebarProvider.refresh();
+            }
         }
     );
 
@@ -212,7 +231,9 @@ export function activate(context: vscode.ExtensionContext) {
             const newMode: ModelMode = currentMode === 'chat' ? 'agent' : 'chat';
             await copilotIntegration.switchMode(newMode);
             updateStatusBar();
-            sidebarProvider.refresh();
+            if (sidebarProvider) {
+                sidebarProvider.refresh();
+            }
         }
     );
 
@@ -222,7 +243,9 @@ export function activate(context: vscode.ExtensionContext) {
         async () => {
             await copilotIntegration.showModelSelector();
             updateStatusBar();
-            sidebarProvider.refresh();
+            if (sidebarProvider) {
+                sidebarProvider.refresh();
+            }
         }
     );
 
@@ -257,36 +280,43 @@ export function activate(context: vscode.ExtensionContext) {
     function createOrShowChatPanel() {
         if (chatPanel) {
             chatPanel.reveal(vscode.ViewColumn.One);
-        } else {
-            chatPanel = vscode.window.createWebviewPanel(
-                'promptEnrichmentChat',
-                'Prompt Enrichment Chat',
-                vscode.ViewColumn.One,
-                {
-                    enableScripts: true,
-                    retainContextWhenHidden: true
-                }
-            );
-
-            updateChatPanel();
-
-            chatPanel.webview.onDidReceiveMessage(
-                async (message) => {
-                    switch (message.command) {
-                        case 'sendMessage':
-                            await handleSendMessage(message.prompt);
-                            break;
-                        case 'enrichPrompt':
-                            await handleEnrichPrompt(message.prompt);
-                            break;
-                    }
-                }
-            );
-
-            chatPanel.onDidDispose(() => {
-                chatPanel = undefined;
-            });
+            return;
         }
+        
+        chatPanel = vscode.window.createWebviewPanel(
+            'promptEnrichmentChat',
+            'Prompt Enrichment Chat',
+            vscode.ViewColumn.One,
+            {
+                enableScripts: true,
+                retainContextWhenHidden: true
+            }
+        );
+
+        updateChatPanel();
+
+        chatPanel.webview.onDidReceiveMessage(
+            async (message) => {
+                switch (message.command) {
+                    case 'sendMessage':
+                        await handleSendMessage(message.prompt);
+                        break;
+                    case 'enrichPrompt':
+                        await handleEnrichPrompt(message.prompt);
+                        break;
+                    case 'applyAgentAction':
+                        await handleApplyAction();
+                        break;
+                    case 'rejectAgentAction':
+                        await handleRejectAction();
+                        break;
+                }
+            }
+        );
+
+        chatPanel.onDidDispose(() => {
+            chatPanel = undefined;
+        });
     }
 
     function updateChatPanel() {
@@ -300,19 +330,40 @@ export function activate(context: vscode.ExtensionContext) {
 
     async function handleSendMessage(prompt: string) {
         try {
+            console.log('Sending message:', prompt);
+            
             // Enrich the prompt
             const enriched = await enrichmentEngine.enrichPrompt(prompt);
+            console.log('Prompt enriched, sending to Copilot...');
 
             // Send to Copilot
             const response = await copilotIntegration.sendMessage(enriched.enrichedPrompt);
+            console.log('Received response from Copilot:', response.content.substring(0, 100));
 
-            // Update chat panel
-            updateChatPanel();
+            // Force update chat panel with new messages
+            const messages = copilotIntegration.getChatHistory();
+            console.log('Total messages in history:', messages.length);
+            
+            if (chatPanel) {
+                chatPanel.webview.html = getChatPanelHtml(messages);
+                
+                // Scroll to bottom
+                chatPanel.webview.postMessage({ command: 'scrollToBottom' });
+            }
 
             // Notify completion
             chatPanel?.webview.postMessage({ command: 'messageComplete' });
+            
+            // Show agent actions if any
+            if (response.actions && response.actions.length > 0) {
+                const actionsDesc = response.actions.map(a => `• ${a.description}`).join('\n');
+                vscode.window.showInformationMessage(
+                    `🤖 Agent actions executed:\n${actionsDesc}`
+                );
+            }
         } catch (error) {
             console.error('Error sending message:', error);
+            vscode.window.showErrorMessage(`Error: ${error}`);
             chatPanel?.webview.postMessage({
                 command: 'error',
                 error: String(error)
@@ -320,17 +371,25 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    // UPDATED: Inline enrichment - updates input field instead of showing preview
     async function handleEnrichPrompt(prompt: string) {
         try {
             const enriched = await enrichmentEngine.enrichPrompt(prompt);
-            const approved = await enrichmentEngine.showEnrichmentPreview(enriched);
-
-            if (approved && chatPanel) {
-                // User approved, send the enriched prompt
-                await handleSendMessage(prompt);
-            } else {
-                chatPanel?.webview.postMessage({ command: 'messageComplete' });
-            }
+            
+            // Send enriched prompt back to update input field
+            chatPanel?.webview.postMessage({
+                command: 'enrichedPrompt',
+                enrichedPrompt: enriched.enrichedPrompt
+            });
+            
+            // Show info about enrichment
+            const templateInfo = enriched.template 
+                ? `using ${enriched.template.name}` 
+                : 'with professional formatting';
+            
+            vscode.window.showInformationMessage(
+                `✨ Prompt enriched ${templateInfo}. Review and click Send!`
+            );
         } catch (error) {
             console.error('Error enriching prompt:', error);
             chatPanel?.webview.postMessage({
@@ -340,9 +399,50 @@ export function activate(context: vscode.ExtensionContext) {
         }
     }
 
+    // NEW: Handle Apply Action
+    async function handleApplyAction() {
+        try {
+            console.log('User clicked Apply, executing agent action...');
+            const result = await copilotIntegration.executeAgentAction();
+            
+            // Update chat history with result
+            const messages = copilotIntegration.getChatHistory();
+            if (chatPanel) {
+                chatPanel.webview.html = getChatPanelHtml(messages);
+                chatPanel.webview.postMessage({ command: 'scrollToBottom' });
+            }
+            
+            vscode.window.showInformationMessage('✅ Action applied successfully!');
+        } catch (error) {
+            console.error('Error applying action:', error);
+            vscode.window.showErrorMessage(`Error: ${error}`);
+        }
+    }
+
+    // NEW: Handle Reject Action
+    async function handleRejectAction() {
+        try {
+            console.log('User clicked Reject, cancelling agent action...');
+            const result = copilotIntegration.rejectAgentAction();
+            
+            // Update chat history with rejection message
+            const messages = copilotIntegration.getChatHistory();
+            if (chatPanel) {
+                chatPanel.webview.html = getChatPanelHtml(messages);
+                chatPanel.webview.postMessage({ command: 'scrollToBottom' });
+            }
+            
+            vscode.window.showInformationMessage('Action cancelled');
+        } catch (error) {
+            console.error('Error rejecting action:', error);
+            vscode.window.showErrorMessage(`Error: ${error}`);
+        }
+    }
+
     // Register all commands
     context.subscriptions.push(
         reindexRepoCommand,
+        generateSemanticIndexCommand,
         showTemplatesCommand,
         switchToChatModeCommand,
         switchToAgentModeCommand,
@@ -439,4 +539,3 @@ class SidebarProvider implements vscode.WebviewViewProvider {
 export function deactivate() {
     console.log('Intelligent Prompt Enrichment extension is now deactivated');
 }
-

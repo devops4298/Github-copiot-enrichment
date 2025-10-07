@@ -3,7 +3,11 @@
   "displayName": "Intelligent Prompt Enrichment & Agent Integration",
   "description": "Enhances GitHub Copilot with intelligent prompt enrichment, repo indexing, and agent mode",
   "version": "0.1.0",
-  "publisher": "chetan chauhan",
+  "publisher": "chetanchauhan",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/devops4298/vscode-prompt-enrichment.git"
+  },
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -20,7 +24,11 @@
     "commands": [
       {
         "command": "promptEnrichment.reindexRepo",
-        "title": "Prompt Enrichment: Reindex Repository"
+        "title": "Prompt Enrichment: Reindex Repository (Fast)"
+      },
+      {
+        "command": "promptEnrichment.generateSemanticIndex",
+        "title": "Prompt Enrichment: Generate Semantic Embeddings (Optional)"
       },
       {
         "command": "promptEnrichment.showTemplates",
@@ -76,7 +84,7 @@
         },
         "promptEnrichment.selectedModel": {
           "type": "string",
-          "default": "gpt-4",
+          "default": "gpt-4-turbo",
           "description": "Currently selected model"
         },
         "promptEnrichment.autoIndex": {
@@ -86,9 +94,14 @@
         },
         "promptEnrichment.embeddingProvider": {
           "type": "string",
-          "enum": ["openai", "ollama", "local"],
-          "default": "openai",
-          "description": "Embedding provider for repository indexing"
+          "enum": ["local", "enhanced", "bm25"],
+          "default": "local",
+          "description": "Embedding provider for repository indexing (local=TF-IDF, enhanced=Bigrams, bm25=BM25 ranking)"
+        },
+        "promptEnrichment.maxFiles": {
+          "type": "number",
+          "default": 2000,
+          "description": "Maximum number of files to index (like GitHub Copilot)"
         }
       }
     }
@@ -100,19 +113,17 @@
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src --ext ts",
     "test": "echo \"Tests coming soon\"",
-    "package": "vsce package",
-    "publish": "vsce publish"
+    "package": "npx @vscode/vsce package",
+    "publish": "npx @vscode/vsce publish"
   },
   "devDependencies": {
     "@types/node": "^20.x",
     "@types/vscode": "^1.85.0",
     "@typescript-eslint/eslint-plugin": "^6.x",
     "@typescript-eslint/parser": "^6.x",
+    "@vscode/vsce": "^3.6.2",
     "eslint": "^8.x",
     "typescript": "^5.3.0"
   },
-  "dependencies": {
-    "openai": "^4.20.0"
-  }
+  "dependencies": {}
 }
-
