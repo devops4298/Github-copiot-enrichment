@@ -1,0 +1,118 @@
+{
+  "name": "intelligent-prompt-enrichment",
+  "displayName": "Intelligent Prompt Enrichment & Agent Integration",
+  "description": "Enhances GitHub Copilot with intelligent prompt enrichment, repo indexing, and agent mode",
+  "version": "0.1.0",
+  "publisher": "chetan chauhan",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "categories": [
+    "AI",
+    "Machine Learning",
+    "Other"
+  ],
+  "activationEvents": [
+    "onStartupFinished"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "promptEnrichment.reindexRepo",
+        "title": "Prompt Enrichment: Reindex Repository"
+      },
+      {
+        "command": "promptEnrichment.showTemplates",
+        "title": "Prompt Enrichment: Show Templates"
+      },
+      {
+        "command": "promptEnrichment.switchToChatMode",
+        "title": "Copilot: Switch to Chat Mode"
+      },
+      {
+        "command": "promptEnrichment.switchToAgentMode",
+        "title": "Copilot: Switch to Agent Mode"
+      },
+      {
+        "command": "promptEnrichment.changeModel",
+        "title": "Copilot: Change Model"
+      },
+      {
+        "command": "promptEnrichment.openChat",
+        "title": "Open Prompt Enrichment Chat"
+      },
+      {
+        "command": "promptEnrichment.enrichPrompt",
+        "title": "Enrich Current Prompt"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "promptEnrichment",
+          "title": "Prompt Enrichment",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "promptEnrichment": [
+        {
+          "id": "promptEnrichmentSidebar",
+          "name": "Prompt Enrichment",
+          "type": "webview"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Prompt Enrichment",
+      "properties": {
+        "promptEnrichment.mode": {
+          "type": "string",
+          "enum": ["chat", "agent"],
+          "default": "chat",
+          "description": "Current mode (Chat or Agent)"
+        },
+        "promptEnrichment.selectedModel": {
+          "type": "string",
+          "default": "gpt-4",
+          "description": "Currently selected model"
+        },
+        "promptEnrichment.autoIndex": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically index repository on startup"
+        },
+        "promptEnrichment.embeddingProvider": {
+          "type": "string",
+          "enum": ["openai", "ollama", "local"],
+          "default": "openai",
+          "description": "Embedding provider for repository indexing"
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run compile && npm run lint",
+    "lint": "eslint src --ext ts",
+    "test": "echo \"Tests coming soon\"",
+    "package": "vsce package",
+    "publish": "vsce publish"
+  },
+  "devDependencies": {
+    "@types/node": "^20.x",
+    "@types/vscode": "^1.85.0",
+    "@typescript-eslint/eslint-plugin": "^6.x",
+    "@typescript-eslint/parser": "^6.x",
+    "eslint": "^8.x",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "openai": "^4.20.0"
+  }
+}
+

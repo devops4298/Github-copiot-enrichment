@@ -1,0 +1,14 @@
+{
+  "id": "semantic_filter",
+  "name": "Semantic Filter",
+  "description": "Filters and focuses on specific aspects",
+  "category": "focus-control",
+  "structure": {
+    "topic": "Topic: {topic}",
+    "focus_on": "Focus specifically on:\n{focus_areas}",
+    "ignore": "Ignore:\n{ignore_areas}",
+    "question": "Question: {question}"
+  },
+  "example": "Topic: Microservices architecture\n\nFocus specifically on:\n- Service communication patterns\n- Data consistency strategies\n\nIgnore:\n- Deployment details\n- Infrastructure concerns\n\nQuestion: How should services communicate in an event-driven system?"
+}
+

@@ -1,0 +1,14 @@
+{
+  "id": "recipe_pattern",
+  "name": "Recipe Pattern",
+  "description": "Provides a sequence of steps to achieve a goal",
+  "category": "instructional",
+  "structure": {
+    "goal": "Goal: {goal}",
+    "ingredients": "Required components:\n{ingredients}",
+    "steps": "Steps:\n{steps}",
+    "validation": "Success criteria: {criteria}"
+  },
+  "example": "Goal: Implement JWT authentication\n\nRequired components:\n- JWT library\n- User database\n- Token storage\n\nSteps:\n1. Install JWT library\n2. Create token generation function\n3. Implement middleware for token validation\n\nSuccess criteria: Secure token-based authentication with proper expiration"
+}
+

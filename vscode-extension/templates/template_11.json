@@ -1,0 +1,14 @@
+{
+  "id": "meta_language_creation",
+  "name": "Meta Language Creation",
+  "description": "Creates a domain-specific language for the task",
+  "category": "abstraction",
+  "structure": {
+    "domain": "Domain: {domain}",
+    "notation": "Using this notation:\n{notation_rules}",
+    "task": "Task: {task}",
+    "output": "Provide solution using the defined notation."
+  },
+  "example": "Domain: Database schema design\n\nUsing this notation:\n- [Table] for table definitions\n- {Field:Type} for columns\n- ->Reference for foreign keys\n\nTask: Design a schema for a blog system\n\nProvide solution using the defined notation."
+}
+

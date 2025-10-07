@@ -1,0 +1,13 @@
+{
+  "id": "cognitive_verifier",
+  "name": "Cognitive Verifier",
+  "description": "Breaks down and verifies each part of the solution",
+  "category": "verification",
+  "structure": {
+    "task": "Task: {task}",
+    "approach": "For this task:\n1. Break it into sub-problems\n2. Solve each sub-problem\n3. Verify each solution\n4. Combine into final solution",
+    "verification": "Include verification steps for each part."
+  },
+  "example": "Task: Implement user authentication with OAuth2\n\nFor this task:\n1. Break it into sub-problems\n2. Solve each sub-problem\n3. Verify each solution\n4. Combine into final solution\n\nInclude verification steps for each part."
+}
+

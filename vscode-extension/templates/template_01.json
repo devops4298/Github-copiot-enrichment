@@ -1,0 +1,14 @@
+{
+  "id": "persona_pattern",
+  "name": "Persona Pattern",
+  "description": "Assigns a specific role or persona to the AI",
+  "category": "role-based",
+  "structure": {
+    "role": "You are a {role}",
+    "context": "Context: {context}",
+    "task": "Task: {task}",
+    "constraints": "Constraints: {constraints}"
+  },
+  "example": "You are a senior software architect with expertise in distributed systems.\n\nContext: We are building a microservices-based e-commerce platform.\n\nTask: Design a scalable order processing service.\n\nConstraints: Must handle 10k requests/second, ensure data consistency."
+}
+

@@ -1,0 +1,47 @@
+name: Build Extension
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - uses: actions/checkout@v3
+    
+    - name: Setup Node.js
+      uses: actions/setup-node@v3
+      with:
+        node-version: '18'
+        cache: 'npm'
+        cache-dependency-path: vscode-extension/package-lock.json
+    
+    - name: Install dependencies
+      working-directory: ./vscode-extension
+      run: npm ci
+    
+    - name: Compile
+      working-directory: ./vscode-extension
+      run: npm run compile
+    
+    - name: Lint
+      working-directory: ./vscode-extension
+      run: npm run lint
+      continue-on-error: true
+    
+    - name: Package
+      working-directory: ./vscode-extension
+      run: |
+        npm install -g vsce
+        vsce package
+    
+    - name: Upload VSIX
+      uses: actions/upload-artifact@v3
+      with:
+        name: extension-vsix
+        path: vscode-extension/*.vsix
+

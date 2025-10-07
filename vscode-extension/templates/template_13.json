@@ -1,0 +1,13 @@
+{
+  "id": "fact_check_list",
+  "name": "Fact Check List",
+  "description": "Requests verification of claims with sources",
+  "category": "verification",
+  "structure": {
+    "statement": "Statement: {statement}",
+    "verification": "Please verify:\n1. Accuracy of the claim\n2. Supporting evidence\n3. Alternative viewpoints\n4. Best practices",
+    "sources": "Provide reasoning based on established principles."
+  },
+  "example": "Statement: Using microservices always improves scalability\n\nPlease verify:\n1. Accuracy of the claim\n2. Supporting evidence\n3. Alternative viewpoints\n4. Best practices\n\nProvide reasoning based on established principles."
+}
+

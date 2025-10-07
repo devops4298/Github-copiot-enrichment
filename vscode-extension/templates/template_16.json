@@ -1,0 +1,13 @@
+{
+  "id": "flipped_interaction",
+  "name": "Flipped Interaction",
+  "description": "AI asks questions to better understand requirements",
+  "category": "interactive",
+  "structure": {
+    "goal": "Goal: {goal}",
+    "instruction": "Before providing a solution, ask me questions to understand:\n- Requirements\n- Constraints\n- Context\n- Preferences",
+    "process": "Then provide a tailored solution based on my answers."
+  },
+  "example": "Goal: Improve application performance\n\nBefore providing a solution, ask me questions to understand:\n- Requirements\n- Constraints\n- Context\n- Preferences\n\nThen provide a tailored solution based on my answers."
+}
+

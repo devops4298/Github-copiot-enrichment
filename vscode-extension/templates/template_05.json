@@ -1,0 +1,13 @@
+{
+  "id": "template_pattern",
+  "name": "Template Pattern",
+  "description": "Uses placeholders for structured output",
+  "category": "format-control",
+  "structure": {
+    "instruction": "Fill in the following template:",
+    "template": "{template_structure}",
+    "context": "Context: {context}"
+  },
+  "example": "Fill in the following template:\n\nFunction Name: ___\nParameters: ___\nReturn Type: ___\nDescription: ___\nImplementation: ___\n\nContext: Create a function to validate email addresses"
+}
+

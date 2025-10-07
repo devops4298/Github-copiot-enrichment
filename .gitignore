@@ -1,0 +1,50 @@
+# Dependencies
+node_modules/
+npm-debug.log*
+package-lock.json
+
+# Build output
+out/
+dist/
+*.vsix
+
+# VS Code
+.vscode/settings.json
+.vscode-test/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Environment
+.env
+.env.local
+
+# Logs
+*.log
+logs/
+
+# Temporary files
+*.tmp
+*.temp
+.cache/
+
+# IDE
+.idea/
+*.swp
+*.swo
+*~
+
+# TypeScript
+*.tsbuildinfo
+
+# Testing
+coverage/
+.nyc_output/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+

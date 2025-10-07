@@ -1,0 +1,14 @@
+{
+  "id": "game_play_pattern",
+  "name": "Game Play Pattern",
+  "description": "Structures interaction as a game with rules and objectives",
+  "category": "interactive",
+  "structure": {
+    "scenario": "Scenario: {scenario}",
+    "rules": "Rules:\n{rules}",
+    "objective": "Objective: {objective}",
+    "action": "Current action: {action}"
+  },
+  "example": "Scenario: Code review simulation\n\nRules:\n- Review code for bugs, security issues, and best practices\n- Provide severity levels (critical, high, medium, low)\n- Suggest improvements\n\nObjective: Identify all issues and provide actionable feedback\n\nCurrent action: Review the following code snippet..."
+}
+

@@ -1,0 +1,13 @@
+{
+  "id": "question_refinement",
+  "name": "Question Refinement",
+  "description": "Refines and clarifies the question before answering",
+  "category": "clarification",
+  "structure": {
+    "initial_question": "Initial question: {question}",
+    "clarifications": "Before answering, please clarify:\n{clarification_points}",
+    "refined_question": "Then provide a comprehensive answer."
+  },
+  "example": "Initial question: How do I implement caching?\n\nBefore answering, please clarify:\n- What type of data needs caching?\n- What is the cache invalidation strategy?\n- What are the performance requirements?\n- What technology stack are you using?\n\nThen provide a comprehensive answer."
+}
+

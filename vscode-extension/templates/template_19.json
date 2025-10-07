@@ -1,0 +1,14 @@
+{
+  "id": "visualization_generator",
+  "name": "Visualization Generator",
+  "description": "Requests visual representations (ASCII art, diagrams, etc.)",
+  "category": "visualization",
+  "structure": {
+    "concept": "Concept: {concept}",
+    "visualization_type": "Visualization type: {type}",
+    "include": "Include:\n{elements}",
+    "format": "Use ASCII art or structured text format."
+  },
+  "example": "Concept: Microservices communication flow\n\nVisualization type: Sequence diagram\n\nInclude:\n- Service components\n- Message flow\n- API calls\n- Database interactions\n\nUse ASCII art or structured text format."
+}
+

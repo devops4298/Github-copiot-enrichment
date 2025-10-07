@@ -1,0 +1,13 @@
+{
+  "id": "alternative_approaches",
+  "name": "Alternative Approaches",
+  "description": "Requests multiple solution approaches",
+  "category": "exploration",
+  "structure": {
+    "problem": "Problem: {problem}",
+    "request": "Provide at least 3 different approaches to solve this:",
+    "format": "For each approach, include:\n- Approach name\n- Description\n- Pros and cons\n- Use cases"
+  },
+  "example": "Problem: Handle real-time data synchronization between client and server\n\nProvide at least 3 different approaches to solve this:\n\nFor each approach, include:\n- Approach name\n- Description\n- Pros and cons\n- Use cases"
+}
+

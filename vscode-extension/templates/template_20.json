@@ -1,0 +1,14 @@
+{
+  "id": "comparative_analysis",
+  "name": "Comparative Analysis",
+  "description": "Compares multiple options with detailed analysis",
+  "category": "analysis",
+  "structure": {
+    "options": "Compare the following options:\n{options_list}",
+    "criteria": "Evaluation criteria:\n{criteria}",
+    "format": "For each option, provide:\n- Overview\n- Strengths\n- Weaknesses\n- Performance characteristics\n- Best use cases",
+    "recommendation": "Finally, provide a recommendation based on: {context}"
+  },
+  "example": "Compare the following options:\n1. REST API\n2. GraphQL\n3. gRPC\n\nEvaluation criteria:\n- Performance\n- Developer experience\n- Scalability\n- Tooling support\n\nFor each option, provide:\n- Overview\n- Strengths\n- Weaknesses\n- Performance characteristics\n- Best use cases\n\nFinally, provide a recommendation based on: Building a real-time collaborative application"
+}
+

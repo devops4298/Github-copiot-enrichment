@@ -1,0 +1,14 @@
+{
+  "id": "chain_of_thought",
+  "name": "Chain of Thought",
+  "description": "Encourages step-by-step reasoning",
+  "category": "reasoning",
+  "structure": {
+    "instruction": "Let's think through this step by step:",
+    "problem": "Problem: {problem}",
+    "steps": "Steps to follow:\n1. {step1}\n2. {step2}\n3. {step3}",
+    "output": "Provide your reasoning for each step."
+  },
+  "example": "Let's think through this step by step:\n\nProblem: Optimize database query performance\n\nSteps to follow:\n1. Analyze current query execution plan\n2. Identify bottlenecks\n3. Propose optimization strategies\n\nProvide your reasoning for each step."
+}
+

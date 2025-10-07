@@ -1,0 +1,13 @@
+{
+  "id": "few_shot_examples",
+  "name": "Few-Shot Examples",
+  "description": "Provides examples to guide the response format",
+  "category": "example-based",
+  "structure": {
+    "instruction": "Here are some examples of the desired output format:",
+    "examples": "Example 1:\nInput: {example1_input}\nOutput: {example1_output}\n\nExample 2:\nInput: {example2_input}\nOutput: {example2_output}",
+    "task": "Now, apply the same format to:\nInput: {actual_input}"
+  },
+  "example": "Here are some examples of the desired output format:\n\nExample 1:\nInput: Create a REST endpoint for user login\nOutput: POST /api/auth/login\n{\n  \"email\": \"string\",\n  \"password\": \"string\"\n}\n\nNow, apply the same format to:\nInput: Create a REST endpoint for product search"
+}
+

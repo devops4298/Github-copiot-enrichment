@@ -1,0 +1,14 @@
+{
+  "id": "context_manager",
+  "name": "Context Manager",
+  "description": "Establishes and maintains context throughout the conversation",
+  "category": "context-control",
+  "structure": {
+    "background": "Background information:\n{background}",
+    "current_state": "Current state:\n{current_state}",
+    "constraints": "Constraints:\n{constraints}",
+    "question": "Question: {question}"
+  },
+  "example": "Background information:\nWe have a React application with Redux for state management\n\nCurrent state:\nThe app is experiencing slow re-renders on large lists\n\nConstraints:\nMust maintain backward compatibility with existing components\n\nQuestion: How can we optimize the rendering performance?"
+}
+

@@ -1,0 +1,13 @@
+{
+  "id": "infinite_generation",
+  "name": "Infinite Generation",
+  "description": "Generates variations or iterations continuously",
+  "category": "generation",
+  "structure": {
+    "base": "Base concept: {concept}",
+    "variations": "Generate {number} variations that:\n{criteria}",
+    "format": "For each variation, provide:\n- Name\n- Description\n- Key differences\n- Use case"
+  },
+  "example": "Base concept: REST API endpoint design\n\nGenerate 5 variations that:\n- Handle different use cases\n- Show different patterns\n- Demonstrate various complexity levels\n\nFor each variation, provide:\n- Name\n- Description\n- Key differences\n- Use case"
+}
+

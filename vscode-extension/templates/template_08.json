@@ -1,0 +1,13 @@
+{
+  "id": "output_automator",
+  "name": "Output Automator",
+  "description": "Specifies exact output format and structure",
+  "category": "format-control",
+  "structure": {
+    "task": "Task: {task}",
+    "output_format": "Output must be in the following format:\n{format_specification}",
+    "example_output": "Example output:\n{example}"
+  },
+  "example": "Task: Generate API documentation\n\nOutput must be in the following format:\nJSON schema with:\n- endpoint\n- method\n- parameters (name, type, required)\n- response schema\n- example request/response\n\nExample output:\n{\n  \"endpoint\": \"/api/users\",\n  \"method\": \"GET\",\n  \"parameters\": [...]\n}"
+}
+

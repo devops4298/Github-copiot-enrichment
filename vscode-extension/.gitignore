@@ -1,0 +1,15 @@
+out
+dist
+node_modules
+.vscode-test/
+*.vsix
+.DS_Store
+*.log
+.env
+.vscode/settings.json
+!.vscode/launch.json
+!.vscode/tasks.json
+*.js.map
+*.d.ts
+!typings/**/*.d.ts
+

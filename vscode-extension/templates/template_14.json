@@ -1,0 +1,14 @@
+{
+  "id": "reflection_pattern",
+  "name": "Reflection Pattern",
+  "description": "Asks the AI to reflect on and improve its own output",
+  "category": "self-improvement",
+  "structure": {
+    "task": "Task: {task}",
+    "initial_response": "First, provide your initial solution.",
+    "reflection": "Then, reflect on:\n- Potential issues\n- Edge cases\n- Improvements\n- Alternative approaches",
+    "final": "Finally, provide an improved solution."
+  },
+  "example": "Task: Write a function to merge two sorted arrays\n\nFirst, provide your initial solution.\n\nThen, reflect on:\n- Potential issues\n- Edge cases\n- Improvements\n- Alternative approaches\n\nFinally, provide an improved solution."
+}
+

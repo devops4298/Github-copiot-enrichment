@@ -1,0 +1,14 @@
+{
+  "id": "audience_pattern",
+  "name": "Audience Pattern",
+  "description": "Tailors response to specific audience expertise level",
+  "category": "audience-awareness",
+  "structure": {
+    "audience": "Target audience: {audience_level}",
+    "prior_knowledge": "Assumed prior knowledge: {knowledge}",
+    "topic": "Topic: {topic}",
+    "request": "Explain {specific_aspect}"
+  },
+  "example": "Target audience: Junior developers with 1 year experience\n\nAssumed prior knowledge: Basic JavaScript, HTML/CSS\n\nTopic: React hooks\n\nExplain how to use useEffect for data fetching"
+}
+
